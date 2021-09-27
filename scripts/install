@@ -84,29 +84,14 @@ ynh_add_fpm_config --package="$extra_php_dependencies"
 phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
-#  ADD A CONFIGURATION
+# Files owned by user app
 #=================================================
-ynh_script_progression --message="Adding a configuration file..." --weight=5
 
-# copy config.dist.php creating config.local.php
-cp -a $final_path/config.dist.php $final_path/config.local.php
-# create a key for the secret key CSFR;
-key=$(ynh_string_random --length=50)
-# edit config.local.php
-ynh_replace_string --match_string="const SECRET_KEY = '3xUhIgGwuovRKOjVsVPQ5yUMfXUSIOX2GKzcebsz5OINrYC50r';" --replace_string="const SECRET_KEY = '$key';" --target_file="$final_path/config.local.php"
-if [ "$path_url" == "/" ]; then
-  ynh_replace_string --match_string="//const WWW_URI = '/asso/';" --replace_string="const WWW_URI = '$path_url';" --target_file="$final_path/config.local.php"
-else
-  ynh_replace_string --match_string="//const WWW_URI = '/asso/';" --replace_string="const WWW_URI = '$path_url/';" --target_file="$final_path/config.local.php"
-fi
+chown $app:$app $final_path -R
+chmod 755 $final_path -R
 
-# Permissions on files and directories
-chmod -R o-rwx "$final_path"
-chown -R $app:www-data "$final_path"
-find "$final_path" -type d -exec chmod 550 {} +
-find "$final_path" -type f -exec chmod 440 {} +
-chmod 660 "$final_path/config.local.php"
-
+# Remove the public access
+ynh_app_setting_delete --app=$app --key=skipped_uris
 #=================================================
 # SETUP SSOWAT
 #=================================================
@@ -118,6 +103,23 @@ then
     # Everyone can access the app.
   # The "main" permission is automatically created before the install script.
   ynh_permission_update --permission "main" --add "visitors"
+fi
+# Only the users can access to the panel of the app
+# ynh_permission_update --permission="main" --add "all_users"
+
+#=================================================
+# MODIFY A CONFIG FILE
+#=================================================
+# copy config.dist.php creating config.local.php
+cp -a $final_path/config.dist.php $final_path/config.local.php
+# create a key for the secret key CSFR;
+key=$(ynh_string_random --length=50)
+# edit config.local.php
+ynh_replace_string --match_string="const SECRET_KEY = '3xUhIgGwuovRKOjVsVPQ5yUMfXUSIOX2GKzcebsz5OINrYC50r';" --replace_string="const SECRET_KEY = '$key';" --target_file="$final_path/config.local.php"
+if [ "$path_url" == "/" ]; then
+  ynh_replace_string --match_string="//const WWW_URI = '/asso/';" --replace_string="const WWW_URI = '$path_url';" --target_file="$final_path/config.local.php"
+else
+  ynh_replace_string --match_string="//const WWW_URI = '/asso/';" --replace_string="const WWW_URI = '$path_url/';" --target_file="$final_path/config.local.php"
 fi
 
 #=================================================
