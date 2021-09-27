@@ -148,8 +148,6 @@ chmod -R o-rwx "$final_path"
 chown -R $app:www-data "$final_path"
 find "$final_path" -type d -exec chmod 550 {} +
 find "$final_path" -type f -exec chmod 440 {} +
-find "$final_path/data" -type d -exec chmod 770 {} +
-find "$final_path/data" -type f -exec chmod 660 {} +
 chmod 660 "$final_path/config.local.php"
 
 #=================================================
